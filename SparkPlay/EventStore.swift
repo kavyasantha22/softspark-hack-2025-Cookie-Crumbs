@@ -11,6 +11,7 @@ import Combine
 final class EventStore: ObservableObject {
     @Published private(set) var events: [Event] = []
     private let fileURL: URL
+    private weak var userStore: UserStore?
 
     init(fileName: String = "events.json") {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -21,9 +22,14 @@ final class EventStore: ObservableObject {
             save()
         }
     }
+    
+    func setUserStore(_ userStore: UserStore) {
+        self.userStore = userStore
+    }
 
     func add(_ event: Event) {
         events.insert(event, at: 0)
+        userStore?.createSpark(event.id)
         save()
     }
 
@@ -33,6 +39,7 @@ final class EventStore: ObservableObject {
         guard !e.isClosed else { return }
         e.participants = min(e.participants + 1, e.maxParticipants)
         events[idx] = e
+        userStore?.joinSpark(eventId)
         save()
     }
 

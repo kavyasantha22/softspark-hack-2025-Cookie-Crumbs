@@ -9,13 +9,13 @@ import MapKit
 
 struct HomeView: View {
     @EnvironmentObject private var store: EventStore
+    @EnvironmentObject private var userStore: UserStore
     @StateObject private var locationManager = LocationManager()
     @State private var searchText: String = ""
     @State private var cameraPosition: MapCameraPosition = .automatic
     @State private var isFollowingUser: Bool = true
 
     @State private var showMapSheet: Bool = false
-    @State private var showAddSheet: Bool = false
     @State private var isKeyboardVisible: Bool = false
     @FocusState private var isSearchFocused: Bool
 
@@ -28,9 +28,18 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Hey There!👋")
                             .font(.system(size: 44, weight: .bold))
-                        Text("Are you bored?")
+                            .foregroundStyle(LinearGradient(
+                                colors: [.orange, .pink],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
+                        Text("Ready to spark some fun?")
                             .font(.title3)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(LinearGradient(
+                                colors: [.purple, .blue],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
                     }
                     .padding(.horizontal)
                     .padding(.top)
@@ -66,8 +75,12 @@ struct HomeView: View {
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundStyle(.white)
                                 .frame(width: 36, height: 36)
-                                .background(.blue, in: Circle())
-                                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                .background(LinearGradient(
+                                    colors: [.orange, .red],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ), in: Circle())
+                                .shadow(color: .orange.opacity(0.4), radius: 6, x: 0, y: 3)
                         }
                         .padding(.top, 12)
                         .padding(.trailing, 12)
@@ -82,6 +95,11 @@ struct HomeView: View {
                     // Section title
                     Text("Nearby Sparks")
                         .font(.title2).bold()
+                        .foregroundStyle(LinearGradient(
+                            colors: [.purple, .pink],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ))
                         .padding(.horizontal)
 
                     // Search field
@@ -107,47 +125,15 @@ struct HomeView: View {
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 100) // Space for bottom bar
+                    .padding(.bottom, 20)
                 }
             }
             
-            // Fixed bottom bar (hidden when keyboard is visible)
-            if !isKeyboardVisible {
-                VStack {
-                    Divider()
-                    HStack {
-                        Image(systemName: "location.north.circle")
-                            .font(.system(size: 30))
-                        Spacer()
-                        ZStack {
-                            Circle()
-                                .strokeBorder(.primary, lineWidth: 2)
-                                .frame(width: 52, height: 52)
-                            Button {
-                                showAddSheet = true
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 22, weight: .bold))
-                            }
-                        }
-                        Spacer()
-                        Image(systemName: "person.circle")
-                            .font(.system(size: 32))
-                    }
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 12)
-                    .background(.regularMaterial)
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
         }
         .sheet(isPresented: $showMapSheet) {
             NavigationStack {
                 MapAccessView()
             }
-        }
-        .sheet(isPresented: $showAddSheet) {
-            NavigationStack { AddSparkView() }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
             withAnimation(.easeInOut(duration: 0.3)) {
@@ -194,7 +180,11 @@ private extension HomeView {
     var filteredEvents: [Event] {
         if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return store.events }
         let q = searchText.lowercased()
-        return store.events.filter { $0.name.lowercased().contains(q) || $0.location.lowercased().contains(q) }
+        return store.events.filter { 
+            $0.name.lowercased().contains(q) || 
+            $0.location.lowercased().contains(q) || 
+            $0.descriptionText.lowercased().contains(q)
+        }
     }
 }
 
@@ -403,10 +393,14 @@ private struct SparkMarker: View {
         }
     }
     
-    private var markerColor: Color {
-        if event.isClosed { return .gray }
-        if event.isFull { return .red }
-        return .orange
+    private var markerColor: LinearGradient {
+        if event.isClosed { 
+            return LinearGradient(colors: [.gray, .gray.opacity(0.7)], startPoint: .top, endPoint: .bottom)
+        }
+        if event.isFull { 
+            return LinearGradient(colors: [.red, .pink], startPoint: .topLeading, endPoint: .bottomTrailing)
+        }
+        return LinearGradient(colors: [.orange, .yellow, .pink], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 }
 

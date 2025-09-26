@@ -31,7 +31,11 @@ struct AddSparkView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Activity Name")
                             .font(.headline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(LinearGradient(
+                                colors: [.orange, .pink],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
                         TextField("What's the activity?", text: $name)
                             .textFieldStyle(.roundedBorder)
                     }
@@ -40,7 +44,11 @@ struct AddSparkView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Photo")
                             .font(.headline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(LinearGradient(
+                                colors: [.purple, .pink],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
                         
                         if let image = capturedImage {
                             Image(uiImage: image)
@@ -57,18 +65,34 @@ struct AddSparkView: View {
                                 showCamera = true
                             } label: {
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(.quaternary)
+                                    .fill(LinearGradient(
+                                        colors: [.orange.opacity(0.1), .pink.opacity(0.1), .purple.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ))
                                     .frame(height: 120)
                                     .overlay {
                                         VStack(spacing: 8) {
                                             Image(systemName: "camera.fill")
                                                 .font(.title2)
-                                                .foregroundStyle(.secondary)
+                                                .foregroundStyle(LinearGradient(
+                                                    colors: [.orange, .pink],
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                ))
                                             Text("Add Photo")
                                                 .font(.subheadline)
-                                                .foregroundStyle(.secondary)
+                                                .foregroundStyle(.orange)
                                         }
                                     }
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(LinearGradient(
+                                                colors: [.orange.opacity(0.3), .pink.opacity(0.3)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ), lineWidth: 2)
+                                    )
                             }
                             .buttonStyle(.plain)
                         }
@@ -81,7 +105,11 @@ struct AddSparkView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Duration")
                             .font(.headline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(LinearGradient(
+                                colors: [.blue, .purple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
                         
                         VStack(spacing: 16) {
                             Toggle(isOn: $isNotEnding) {
@@ -89,6 +117,7 @@ struct AddSparkView: View {
                                     .font(.body)
                             }
                             .toggleStyle(.switch)
+                            .tint(.orange)
                             
                             if !isNotEnding {
                                 HStack(spacing: 20) {
@@ -151,7 +180,11 @@ struct AddSparkView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("People Needed")
                             .font(.headline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(LinearGradient(
+                                colors: [.green, .blue],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
                         
                         HStack {
                             Button {
@@ -159,7 +192,7 @@ struct AddSparkView: View {
                             } label: {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.title2)
-                                    .foregroundStyle(peopleNeeded > 1 ? .blue : .gray)
+                                    .foregroundStyle(peopleNeeded > 1 ? .orange : .gray)
                             }
                             .disabled(peopleNeeded <= 1)
                             
@@ -177,7 +210,7 @@ struct AddSparkView: View {
                             } label: {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.title2)
-                                    .foregroundStyle(.blue)
+                                    .foregroundStyle(.pink)
                             }
                         }
                         .padding()
@@ -188,7 +221,11 @@ struct AddSparkView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Location")
                             .font(.headline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(LinearGradient(
+                                colors: [.red, .orange],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
                         
                         NavigationLink {
                             LocationPickerView { name, lat, lon in
@@ -199,13 +236,13 @@ struct AddSparkView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "location.fill")
-                                    .foregroundStyle(.blue)
+                                    .foregroundStyle(.orange)
                                 Text(location.isEmpty ? "Choose Location" : location)
                                     .foregroundStyle(location.isEmpty ? .secondary : .primary)
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(.orange)
                             }
                             .padding()
                             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
@@ -217,7 +254,11 @@ struct AddSparkView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Description")
                             .font(.headline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(LinearGradient(
+                                colors: [.pink, .purple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
                         
                         TextField("Tell people what this activity is about...", text: $descriptionText, axis: .vertical)
                             .textFieldStyle(.plain)

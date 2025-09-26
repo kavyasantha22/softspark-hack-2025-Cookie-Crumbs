@@ -11,6 +11,13 @@ import UIKit
 struct CameraCapture: UIViewControllerRepresentable {
     @Binding var isShown: Bool
     @Binding var image: UIImage?
+    var onImageSelected: ((UIImage) -> Void)?
+    
+    init(isShown: Binding<Bool>, image: Binding<UIImage?>, onImageSelected: ((UIImage) -> Void)? = nil) {
+        self._isShown = isShown
+        self._image = image
+        self.onImageSelected = onImageSelected
+    }
 
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
         let parent: CameraCapture
@@ -22,6 +29,7 @@ struct CameraCapture: UIViewControllerRepresentable {
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let uiImage = info[.originalImage] as? UIImage {
                 parent.image = uiImage
+                parent.onImageSelected?(uiImage)
             }
             parent.isShown = false
         }

@@ -10,10 +10,16 @@ import SwiftUI
 @main
 struct SparkPlayApp: App {
     @StateObject private var eventStore = EventStore()
+    @StateObject private var userStore = UserStore()
+    
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            MainTabView()
                 .environmentObject(eventStore)
+                .environmentObject(userStore)
+                .onAppear {
+                    eventStore.setUserStore(userStore)
+                }
         }
     }
 }
