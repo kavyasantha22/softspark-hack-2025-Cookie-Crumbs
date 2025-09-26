@@ -20,88 +20,99 @@ struct HomeView: View {
     private let sampleCoordinate = CLLocationCoordinate2D(latitude: 48.8566, longitude: 2.3522)
 
     @State private var showMapSheet: Bool = false
-    
     @State private var showAddSheet: Bool = false
+    @State private var isKeyboardVisible: Bool = false
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Hey There!👋")
-                    .font(.system(size: 44, weight: .bold))
-                Text("Are you bored?")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal)
-
-            // Map
-            Map(position: $cameraPosition) {
-                Marker("", coordinate: sampleCoordinate)
-            }
-            .mapStyle(.standard)
-            .frame(height: 220)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .padding(.horizontal)
-            .contentShape(Rectangle())
-            .onTapGesture { showMapSheet = true }
-
-            // Section title
-            Text("Nearby Sparks")
-                .font(.title2).bold()
-                .padding(.horizontal)
-
-            // Search field
-            HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                TextField("Search", text: $searchText)
-                    .textFieldStyle(.plain)
-                Spacer(minLength: 0)
-                Image(systemName: "mic")
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 12)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .padding(.horizontal)
-
-            // Nearby events list
-            ScrollView(showsIndicators: true) {
-                LazyVStack(spacing: 16) {
-                    ForEach(filteredEvents) { event in
-                        EventCard(event: event)
+        VStack(spacing: 0) {
+            // Scrollable content
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Hey There!👋")
+                            .font(.system(size: 44, weight: .bold))
+                        Text("Are you bored?")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
                     }
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-            }
+                    .padding(.horizontal)
+                    .padding(.top)
 
-            Spacer()
-
-            // Bottom bar
-            HStack {
-                Image(systemName: "location.north.circle")
-                    .font(.system(size: 30))
-                Spacer()
-                ZStack {
-                    Circle()
-                        .strokeBorder(.primary, lineWidth: 2)
-                        .frame(width: 52, height: 52)
-                    Button {
-                        showAddSheet = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 22, weight: .bold))
+                    // Map
+                    Map(position: $cameraPosition) {
+                        Marker("", coordinate: sampleCoordinate)
                     }
+                    .mapStyle(.standard)
+                    .frame(height: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .padding(.horizontal)
+                    .contentShape(Rectangle())
+                    .onTapGesture { showMapSheet = true }
+
+                    // Section title
+                    Text("Nearby Sparks")
+                        .font(.title2).bold()
+                        .padding(.horizontal)
+
+                    // Search field
+                    HStack(spacing: 10) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(.secondary)
+                        TextField("Search", text: $searchText)
+                            .textFieldStyle(.plain)
+                            .focused($isSearchFocused)
+                        Spacer(minLength: 0)
+                        Image(systemName: "mic")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .padding(.horizontal)
+
+                    // Nearby events list
+                    LazyVStack(spacing: 16) {
+                        ForEach(filteredEvents) { event in
+                            EventCard(event: event)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 100) // Space for bottom bar
                 }
-                Spacer()
-                Image(systemName: "person.circle")
-                    .font(.system(size: 32))
             }
-            .padding(.horizontal, 28)
+            
+            // Fixed bottom bar (hidden when keyboard is visible)
+            if !isKeyboardVisible {
+                VStack {
+                    Divider()
+                    HStack {
+                        Image(systemName: "location.north.circle")
+                            .font(.system(size: 30))
+                        Spacer()
+                        ZStack {
+                            Circle()
+                                .strokeBorder(.primary, lineWidth: 2)
+                                .frame(width: 52, height: 52)
+                            Button {
+                                showAddSheet = true
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 22, weight: .bold))
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: "person.circle")
+                            .font(.system(size: 32))
+                    }
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 12)
+                    .background(.regularMaterial)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
-        .padding(.top)
         .sheet(isPresented: $showMapSheet) {
             NavigationStack {
                 MapAccessView()
@@ -109,6 +120,16 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showAddSheet) {
             NavigationStack { AddSparkView() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isKeyboardVisible = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isKeyboardVisible = false
+            }
         }
     }
 }
