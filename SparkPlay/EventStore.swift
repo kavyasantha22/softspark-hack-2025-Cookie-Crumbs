@@ -58,9 +58,9 @@ final class EventStore: ObservableObject {
     private func seed() {
         let now = Date()
         events = [
-            Event(name: "Chess", location: "Park Pavilion", endsAt: Calendar.current.date(byAdding: .minute, value: 90, to: now)!, descriptionText: "Casual chess games.", imageURLString: nil, maxParticipants: 4, participants: 1),
-            Event(name: "Football", location: "Riverside Field", endsAt: Calendar.current.date(byAdding: .minute, value: 120, to: now)!, descriptionText: "5-a-side pickup.", imageURLString: nil, maxParticipants: 10, participants: 3),
-            Event(name: "Drawing", location: "Community Hall", endsAt: Calendar.current.date(byAdding: .minute, value: 60, to: now)!, descriptionText: "Sketch session.", imageURLString: nil, maxParticipants: 5, participants: 2)
+            Event(name: "Chess", location: "Park Pavilion", endsAt: Calendar.current.date(byAdding: .minute, value: 90, to: now)!, descriptionText: "Casual chess games.", imageURLString: nil, maxParticipants: 4, participants: 1, latitude: 37.7849, longitude: -122.4094),
+            Event(name: "Football", location: "Riverside Field", endsAt: Calendar.current.date(byAdding: .minute, value: 120, to: now)!, descriptionText: "5-a-side pickup.", imageURLString: nil, maxParticipants: 10, participants: 3, latitude: 37.7849, longitude: -122.4074),
+            Event(name: "Drawing", location: "Community Hall", endsAt: Calendar.current.date(byAdding: .minute, value: 60, to: now)!, descriptionText: "Sketch session.", imageURLString: nil, maxParticipants: 5, participants: 2, latitude: 37.7829, longitude: -122.4084)
         ]
     }
 }

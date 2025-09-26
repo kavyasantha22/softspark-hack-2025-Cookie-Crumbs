@@ -9,15 +9,10 @@ import MapKit
 
 struct HomeView: View {
     @EnvironmentObject private var store: EventStore
+    @StateObject private var locationManager = LocationManager()
     @State private var searchText: String = ""
-    @State private var cameraPosition: MapCameraPosition = .region(
-        MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 48.8566, longitude: 2.3522),
-            span: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.12)
-        )
-    )
-
-    private let sampleCoordinate = CLLocationCoordinate2D(latitude: 48.8566, longitude: 2.3522)
+    @State private var cameraPosition: MapCameraPosition = .automatic
+    @State private var isFollowingUser: Bool = true
 
     @State private var showMapSheet: Bool = false
     @State private var showAddSheet: Bool = false
@@ -40,11 +35,44 @@ struct HomeView: View {
                     .padding(.horizontal)
                     .padding(.top)
 
-                    // Map
-                    Map(position: $cameraPosition) {
-                        Marker("", coordinate: sampleCoordinate)
+                    // Map with recenter button
+                    ZStack(alignment: .topTrailing) {
+                        Map(position: $cameraPosition) {
+                            // User location marker
+                            if let userLocation = locationManager.latestLocation?.coordinate {
+                                UserAnnotation()
+                            }
+                            
+                            // Custom Spark markers
+                            ForEach(store.events.filter { $0.coordinate != nil }) { event in
+                                if let coordinate = event.coordinate {
+                                    Annotation(event.name, coordinate: coordinate) {
+                                        SparkMarker(event: event)
+                                    }
+                                }
+                            }
+                        }
+                        .mapStyle(.standard)
+                        .onMapCameraChange { context in
+                            // Disable auto-following when user manually moves map
+                            isFollowingUser = false
+                        }
+                        
+                        // Recenter button
+                        Button {
+                            recenterToUserLocation()
+                        } label: {
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 36, height: 36)
+                                .background(.blue, in: Circle())
+                                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                        }
+                        .padding(.top, 12)
+                        .padding(.trailing, 12)
+                        .opacity(isFollowingUser ? 0.5 : 1.0)
                     }
-                    .mapStyle(.standard)
                     .frame(height: 220)
                     .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                     .padding(.horizontal)
@@ -130,6 +158,34 @@ struct HomeView: View {
             withAnimation(.easeInOut(duration: 0.3)) {
                 isKeyboardVisible = false
             }
+        }
+        .onAppear {
+            locationManager.requestWhenInUse()
+        }
+        .onChange(of: locationManager.latestLocation) { _, newLocation in
+            if let location = newLocation, isFollowingUser {
+                withAnimation(.easeInOut(duration: 1.0)) {
+                    cameraPosition = .region(MKCoordinateRegion(
+                        center: location.coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                    ))
+                }
+            }
+        }
+    }
+    
+    private func recenterToUserLocation() {
+        guard let location = locationManager.latestLocation else {
+            locationManager.requestWhenInUse()
+            return
+        }
+        
+        isFollowingUser = true
+        withAnimation(.easeInOut(duration: 0.8)) {
+            cameraPosition = .region(MKCoordinateRegion(
+                center: location.coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            ))
         }
     }
 }
@@ -314,6 +370,54 @@ private struct StatusPill: View {
         if isClosed { return .gray.opacity(0.2) }
         if isFull { return .red }
         return .green.opacity(0.2)
+    }
+}
+
+private struct SparkMarker: View {
+    let event: Event
+    
+    var body: some View {
+        VStack(spacing: 2) {
+            // Main spark icon
+            ZStack {
+                Circle()
+                    .fill(.white)
+                    .frame(width: 44, height: 44)
+                    .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 3)
+                
+                Circle()
+                    .fill(markerColor)
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: "sparkles")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            
+            // Pointer
+            Triangle()
+                .fill(.white)
+                .frame(width: 12, height: 8)
+                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+                .offset(y: -2)
+        }
+    }
+    
+    private var markerColor: Color {
+        if event.isClosed { return .gray }
+        if event.isFull { return .red }
+        return .orange
+    }
+}
+
+private struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.closeSubpath()
+        return path
     }
 }
 
