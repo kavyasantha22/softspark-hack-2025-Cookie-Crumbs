@@ -145,78 +145,134 @@ private extension HomeView {
 private struct EventCard: View {
     let event: Event
     @EnvironmentObject private var store: EventStore
+    @State private var showingDetail = false
 
     var body: some View {
-        ZStack {
-            let borderColor: Color = event.isClosed ? .gray.opacity(0.4) : .black.opacity(0.12)
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Color.white)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(borderColor, lineWidth: event.isClosed ? 2 : 1)
-                )
-                .shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 4)
-
-            HStack(alignment: .center, spacing: 14) {
-                // Picture / placeholder
+        Button {
+            showingDetail = true
+        } label: {
+            VStack(spacing: 0) {
+                // Image section
                 Group {
                     if let url = event.imageURL {
                         AsyncImage(url: url) { image in
-                            image.resizable().scaledToFill()
+                            image
+                                .resizable()
+                                .scaledToFill()
                         } placeholder: {
-                            ProgressView()
+                            Rectangle()
+                                .fill(.ultraThinMaterial)
+                                .overlay {
+                                    ProgressView()
+                                        .tint(.secondary)
+                                }
                         }
                     } else {
-                        ZStack {
-                            Circle().fill(Color.gray.opacity(0.2))
-                            Text(String(event.name.prefix(2)).uppercased())
-                                .font(.system(size: 22, weight: .semibold))
+                        Rectangle()
+                            .fill(LinearGradient(
+                                colors: [.blue.opacity(0.3), .purple.opacity(0.3)], 
+                                startPoint: .topLeading, 
+                                endPoint: .bottomTrailing
+                            ))
+                            .overlay {
+                                VStack(spacing: 4) {
+                                    Image(systemName: "sparkles")
+                                        .font(.title2)
+                                        .foregroundStyle(.white)
+                                    Text(String(event.name.prefix(2)).uppercased())
+                                        .font(.title3)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white)
+                                }
+                            }
+                    }
+                }
+                .frame(height: 140)
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20))
+                
+                // Content section
+                VStack(alignment: .leading, spacing: 12) {
+                    // Title and status
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(event.name)
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.primary)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.leading)
+                            
+                            HStack(spacing: 8) {
+                                Image(systemName: "clock.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                                Text(timeLeftText)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        StatusPill(text: remainingText, isFull: event.isFull, isClosed: event.isClosed)
+                    }
+                    
+                    // Location
+                    HStack(spacing: 6) {
+                        Image(systemName: "location.fill")
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                        Text(event.location)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        Spacer()
+                    }
+                    
+                    // People count and view button
+                    HStack {
+                        HStack(spacing: 4) {
+                            Image(systemName: "person.2.fill")
+                                .font(.caption)
+                                .foregroundStyle(.green)
+                            Text("\(event.participants)/\(event.maxParticipants)")
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 4) {
+                            Text("View")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                        }
+                        .foregroundStyle(.blue)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.blue.opacity(0.1), in: Capsule())
                     }
                 }
-                .frame(width: 64, height: 64)
-                .clipShape(Circle())
-
-                VStack(alignment: .leading, spacing: 8) {
-                    // Title row
-                    HStack(alignment: .center, spacing: 10) {
-                        Text(event.name)
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundStyle(.primary)
-
-                        Pill(text: remainingText)
-
-                        Spacer(minLength: 8)
-                    }
-
-                    // Meta row
-                    HStack(spacing: 16) {
-                        Label(timeLeftText, systemImage: "clock")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-
-                        Label(event.location, systemImage: "mappin.and.ellipse")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-
-                        Label("\(event.participants)/\(event.maxParticipants)", systemImage: "person.2")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Spacer()
-
-                Button(event.isClosed ? "Closed" : "Join") {
-                    store.join(eventId: event.id)
-                }
-                .disabled(event.isClosed)
-                .buttonStyle(.borderedProminent)
+                .padding(16)
+                .background(.regularMaterial)
+                .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 20, bottomTrailingRadius: 20))
             }
-            .padding(16)
         }
-        .frame(maxWidth: .infinity)
+        .buttonStyle(.plain)
+        .background(.white)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(.quaternary, lineWidth: 0.5)
+        )
+        .sheet(isPresented: $showingDetail) {
+            NavigationStack {
+                SparkDetailView(event: event)
+            }
+        }
     }
 
     private var timeLeftText: String {
@@ -233,18 +289,31 @@ private struct EventCard: View {
     }
 }
 
-private struct Pill: View {
-    var text: String
-    var foreground: Color = .primary
-    var background: Color = Color.gray.opacity(0.15)
-
+private struct StatusPill: View {
+    let text: String
+    let isFull: Bool
+    let isClosed: Bool
+    
     var body: some View {
         Text(text)
-            .font(.subheadline)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .foregroundStyle(foreground)
-            .background(background, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .font(.caption)
+            .fontWeight(.medium)
+            .foregroundStyle(foregroundColor)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(backgroundColor, in: Capsule())
+    }
+    
+    private var foregroundColor: Color {
+        if isClosed { return .secondary }
+        if isFull { return .white }
+        return .primary
+    }
+    
+    private var backgroundColor: Color {
+        if isClosed { return .gray.opacity(0.2) }
+        if isFull { return .red }
+        return .green.opacity(0.2)
     }
 }
 
