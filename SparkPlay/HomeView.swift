@@ -117,76 +117,98 @@ private extension HomeView {
     var filteredEvents: [Event] {
         if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return store.events }
         let q = searchText.lowercased()
-        return store.events.filter { $0.title.lowercased().contains(q) }
+        return store.events.filter { $0.name.lowercased().contains(q) || $0.location.lowercased().contains(q) }
     }
 }
 
 private struct EventCard: View {
     let event: Event
+    @EnvironmentObject private var store: EventStore
 
     var body: some View {
         ZStack {
-            let borderColor: Color = event.isOwnChallenge ? .blue : .black.opacity(0.12)
+            let borderColor: Color = event.isClosed ? .gray.opacity(0.4) : .black.opacity(0.12)
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(Color.white)
                 .overlay(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(borderColor, lineWidth: event.isOwnChallenge ? 2 : 1)
+                        .stroke(borderColor, lineWidth: event.isClosed ? 2 : 1)
                 )
                 .shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 4)
 
             HStack(alignment: .center, spacing: 14) {
-                // Avatar
-                ZStack {
-                    Circle()
-                        .fill(LinearGradient(colors: event.avatarGradient, startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 64, height: 64)
-                    Text(event.initials)
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(.white)
+                // Picture / placeholder
+                Group {
+                    if let url = event.imageURL {
+                        AsyncImage(url: url) { image in
+                            image.resizable().scaledToFill()
+                        } placeholder: {
+                            ProgressView()
+                        }
+                    } else {
+                        ZStack {
+                            Circle().fill(Color.gray.opacity(0.2))
+                            Text(String(event.name.prefix(2)).uppercased())
+                                .font(.system(size: 22, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
+                .frame(width: 64, height: 64)
+                .clipShape(Circle())
 
                 VStack(alignment: .leading, spacing: 8) {
                     // Title row
                     HStack(alignment: .center, spacing: 10) {
-                        Text(event.title)
+                        Text(event.name)
                             .font(.system(size: 24, weight: .semibold))
                             .foregroundStyle(.primary)
 
-                        Pill(text: "\(event.distanceMeters)m")
+                        Pill(text: remainingText)
 
                         Spacer(minLength: 8)
-
                     }
 
                     // Meta row
                     HStack(spacing: 16) {
-                        Label("\(event.etaMinutes) min", systemImage: "clock")
+                        Label(timeLeftText, systemImage: "clock")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
-                        if let responses = event.responsesCount, event.isOwnChallenge {
-                            Label("\(responses) responses", systemImage: "figure.2.arms.open")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Label("\(event.participants)", systemImage: "person.2")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
+                        Label(event.location, systemImage: "mappin.and.ellipse")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        Label("\(event.participants)/\(event.maxParticipants)", systemImage: "person.2")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
                 Spacer()
 
-                if !event.isOwnChallenge {
-                    Button("View") {}
-                        .buttonStyle(.borderedProminent)
+                Button(event.isClosed ? "Closed" : "Join") {
+                    store.join(eventId: event.id)
                 }
+                .disabled(event.isClosed)
+                .buttonStyle(.borderedProminent)
             }
             .padding(16)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private var timeLeftText: String {
+        if event.isEnded { return "Ended" }
+        let f = DateComponentsFormatter()
+        f.allowedUnits = [.hour, .minute]
+        f.unitsStyle = .short
+        let s = f.string(from: Date(), to: event.endsAt) ?? "soon"
+        return s + " left"
+    }
+
+    private var remainingText: String {
+        event.isFull ? "Full" : "\(event.remainingSlots) left"
     }
 }
 

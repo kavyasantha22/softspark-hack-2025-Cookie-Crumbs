@@ -27,6 +27,15 @@ final class EventStore: ObservableObject {
         save()
     }
 
+    func join(eventId: UUID) {
+        guard let idx = events.firstIndex(where: { $0.id == eventId }) else { return }
+        var e = events[idx]
+        guard !e.isClosed else { return }
+        e.participants = min(e.participants + 1, e.maxParticipants)
+        events[idx] = e
+        save()
+    }
+
     func remove(at offsets: IndexSet) {
         for index in offsets.sorted(by: >) {
             events.remove(at: index)
@@ -47,10 +56,11 @@ final class EventStore: ObservableObject {
     }
 
     private func seed() {
+        let now = Date()
         events = [
-            Event(title: "Chess", distanceMeters: 150, etaMinutes: 12, participants: 1, isOwnChallenge: false, initials: "A", gradientStartHex: "FF7E5F", gradientEndHex: "FD3A84", responsesCount: nil),
-            Event(title: "Football", distanceMeters: 300, etaMinutes: 8, participants: 3, isOwnChallenge: false, initials: "M", gradientStartHex: "FF7E5F", gradientEndHex: "FD3A84", responsesCount: nil),
-            Event(title: "Drawing", distanceMeters: 220, etaMinutes: 5, participants: 0, isOwnChallenge: true, initials: "SP", gradientStartHex: "7B61FF", gradientEndHex: "2A9DF4", responsesCount: 2)
+            Event(name: "Chess", location: "Park Pavilion", endsAt: Calendar.current.date(byAdding: .minute, value: 90, to: now)!, descriptionText: "Casual chess games.", imageURLString: nil, maxParticipants: 4, participants: 1),
+            Event(name: "Football", location: "Riverside Field", endsAt: Calendar.current.date(byAdding: .minute, value: 120, to: now)!, descriptionText: "5-a-side pickup.", imageURLString: nil, maxParticipants: 10, participants: 3),
+            Event(name: "Drawing", location: "Community Hall", endsAt: Calendar.current.date(byAdding: .minute, value: 60, to: now)!, descriptionText: "Sketch session.", imageURLString: nil, maxParticipants: 5, participants: 2)
         ]
     }
 }
