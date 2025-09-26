@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct SparkPlayApp: App {
+    @StateObject private var eventStore = EventStore()
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
+                .environmentObject(eventStore)
         }
     }
 }
