@@ -206,6 +206,7 @@ private struct SparkSection: View {
     let title: String
     let sparks: [Event]
     let emptyMessage: String
+    @EnvironmentObject private var userStore: UserStore
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -232,7 +233,10 @@ private struct SparkSection: View {
             } else {
                 LazyVStack(spacing: 12) {
                     ForEach(sparks) { spark in
-                        ProfileSparkCard(spark: spark)
+                        ProfileSparkCard(
+                            spark: spark,
+                            isCreatedByUser: userStore.currentUser.createdSparkIds.contains(spark.id)
+                        )
                     }
                 }
             }
@@ -242,7 +246,10 @@ private struct SparkSection: View {
 
 private struct ProfileSparkCard: View {
     let spark: Event
+    let isCreatedByUser: Bool
+    @EnvironmentObject private var eventStore: EventStore
     @State private var showingDetail = false
+    @State private var showingDeleteConfirmation = false
     
     var body: some View {
         Button {
@@ -274,9 +281,22 @@ private struct ProfileSparkCard: View {
                 
                 Spacer()
                 
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                HStack(spacing: 12) {
+                    if isCreatedByUser && !spark.isEnded {
+                        Button {
+                            showingDeleteConfirmation = true
+                        } label: {
+                            Image(systemName: "trash")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
             }
             .padding()
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
@@ -286,6 +306,14 @@ private struct ProfileSparkCard: View {
             NavigationStack {
                 SparkDetailView(event: spark)
             }
+        }
+        .alert("Delete Spark", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                eventStore.deleteSpark(eventId: spark.id)
+            }
+        } message: {
+            Text("Are you sure you want to delete '\(spark.name)'? This action cannot be undone.")
         }
     }
     

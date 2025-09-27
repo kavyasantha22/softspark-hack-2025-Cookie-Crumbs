@@ -110,6 +110,29 @@ final class EventStore: ObservableObject {
         }
         save()
     }
+    
+    func deleteSpark(eventId: UUID) -> Bool {
+        guard let idx = events.firstIndex(where: { $0.id == eventId }) else { return false }
+        let event = events[idx]
+        
+        // Only allow creator to delete their own spark
+        guard userStore?.currentUser.createdSparkIds.contains(eventId) == true else { return false }
+        
+        // Remove the event
+        events.remove(at: idx)
+        
+        // Cancel all notifications for this spark
+        notificationManager?.cancelSparkNotifications(for: eventId)
+        
+        // Remove from user's created sparks
+        userStore?.removeSpark(eventId)
+        
+        // Remove from all users' joined sparks (they can't join a deleted spark)
+        userStore?.removeSparkFromAllJoined(eventId)
+        
+        save()
+        return true
+    }
 
     private func load() {
         guard let data = try? Data(contentsOf: fileURL) else { return }

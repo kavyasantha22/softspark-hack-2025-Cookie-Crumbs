@@ -14,6 +14,7 @@ struct SparkDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingJoinError = false
     @State private var joinErrorMessage = ""
+    @State private var showingDeleteConfirmation = false
     
     var body: some View {
         ScrollView {
@@ -134,6 +135,14 @@ struct SparkDetailView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if isCreator {
+                    Button("Delete", role: .destructive) {
+                        showingDeleteConfirmation = true
+                    }
+                }
+            }
+            
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Done") { dismiss() }
             }
@@ -142,6 +151,14 @@ struct SparkDetailView: View {
             Button("OK") { }
         } message: {
             Text(joinErrorMessage)
+        }
+        .alert("Delete Spark", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                deleteSpark()
+            }
+        } message: {
+            Text("Are you sure you want to delete '\(event.name)'? This action cannot be undone and will remove all participants.")
         }
         .onAppear {
             // Refresh spark statuses when view appears
@@ -232,6 +249,15 @@ struct SparkDetailView: View {
                 }
                 showingJoinError = true
             }
+        }
+    }
+    
+    private func deleteSpark() {
+        if store.deleteSpark(eventId: event.id) {
+            dismiss() // Close the detail view after successful deletion
+        } else {
+            joinErrorMessage = "Unable to delete this Spark. You can only delete Sparks you created."
+            showingJoinError = true
         }
     }
     

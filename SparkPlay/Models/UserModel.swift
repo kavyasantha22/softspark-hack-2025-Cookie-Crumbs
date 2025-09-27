@@ -94,6 +94,20 @@ final class UserStore: ObservableObject {
         // but they won't show as "active" due to isEnded check
     }
     
+    // Remove a spark from user's created sparks (when deleted)
+    func removeSpark(_ sparkId: UUID) {
+        currentUser.createdSparkIds.remove(sparkId)
+        currentUser.joinedSparkIds.remove(sparkId)
+        save()
+    }
+    
+    // Remove a spark from all users' joined sparks (when spark is deleted)
+    func removeSparkFromAllJoined(_ sparkId: UUID) {
+        // Since we only track current user, just remove from current user
+        currentUser.joinedSparkIds.remove(sparkId)
+        save()
+    }
+    
     private func save() {
         let data = (try? JSONEncoder().encode(currentUser)) ?? Data()
         try? data.write(to: fileURL, options: [.atomic])
