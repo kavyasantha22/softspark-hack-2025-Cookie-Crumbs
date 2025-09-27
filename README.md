@@ -268,6 +268,6 @@ Having trouble? Check out:
 
 ---
 
-**Made with ⚡ by [Your Name] for [Hackathon Name]**
+**Made with ⚡ by Kavya, Farhan, Revael, Geraldo for Spark-Soft Hackathon 20225**
 
 *SparkPlay - Where spontaneous connections begin!*
