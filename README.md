@@ -1,5 +1,8 @@
 # SparkPlay ⚡
 
+**Youtube Video Demo link**
+- https://www.youtube.com/watch?v=0kgzR9q__bE 
+
 **A social app for spontaneous local activities and instant connections**
 
 SparkPlay helps people discover and create spontaneous activities ("Sparks") in their local area. Whether it's a pickup basketball game, study session, or coffee meetup, SparkPlay makes it easy to find like-minded people nearby and spark new connections.
